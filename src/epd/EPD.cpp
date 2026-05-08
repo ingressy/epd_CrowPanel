@@ -1,5 +1,14 @@
 #include "EPD.h"
 
+void epd_poweron(void) {
+  //written by Noora
+  pinMode(7, OUTPUT);            // Set pin 7 to output mode.
+  digitalWrite(7, HIGH);  
+  EPD_GPIOInit();
+  EPD_Init();
+
+}
+
 void EPD_ReadBusy(void)
 {
   while (1)

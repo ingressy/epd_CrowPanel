@@ -1,8 +1,8 @@
 #include <WiFi.h>
 
 
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "DoorSign";
+const char* password = "UPmevGb!keScmM$j";
 
 void connectWifi() {
     WiFi.begin(ssid, password);

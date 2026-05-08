@@ -14,6 +14,8 @@ void EPD_ReadBusy(void);
 void EPD_RESET(void);
 void EPD_Sleep(void);
 
+void epd_poweron(void);
+
 void EPD_Update(void);
 void EPD_Update_Fast(void);
 void EPD_Update_Part(void);
