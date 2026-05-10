@@ -8,6 +8,7 @@ String ssid = "";
 String password = "";
 String mqttserver = "";
 uint16_t mqttport = 1883;
+uint16_t id = 0x0A;
 
 void setup() {
     nvs_flash_erase();
@@ -21,9 +22,9 @@ void setup() {
     prefs.begin("mqtt", false);
     prefs.putString("server", mqttserver);
     prefs.putUShort("port", mqttport);
+    prefs.putUShort("number", id);
     prefs.end();
 }
 
 void loop() {
-
 }

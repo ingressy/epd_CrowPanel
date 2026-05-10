@@ -36,7 +36,7 @@ void connectWifi() {
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         versuche++;
-        if (versuche > 120) {
+        if (versuche > 240) {
             WifiErrorPicture();
             return;
         }
