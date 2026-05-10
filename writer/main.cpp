@@ -22,13 +22,9 @@ void setup() {
     prefs.begin("mqtt", false);
     prefs.putString("server", mqttserver);
     prefs.putUShort("port", mqttport);
-    prefs.end();
-
-    prefs.begin("id", false);
-    prefs.putUChar("number", id);
+    prefs.putUShort("number", id);
     prefs.end();
 }
 
 void loop() {
-
 }
