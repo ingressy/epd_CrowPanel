@@ -16,7 +16,7 @@ PubSubClient mqtt(espClient);
 void setup() {
     Serial.begin(115200);
     epd_poweron();
-    EPD_Clear();
+    //EPD_Clear();
 
     connectWifi();
     connectMQTT();

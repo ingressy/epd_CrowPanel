@@ -15,6 +15,9 @@ char server[32];
 uint16_t port;
 uint16_t id;
 
+Preferences prefs;
+bool noerrorimage;
+
 void callback(char* topic, byte* payload, unsigned int length);
 
 bool loadMQTTData() {
@@ -34,13 +37,22 @@ bool loadMQTTData() {
     id = prefs.getUShort("number");
     prefs.end();
 
+    prefs.begin("errorimage", true);
+    noerrorimage = prefs.getBool("noerrorimage", false);
+    prefs.end();
+
     return true;
 }
 
 void connectMQTT() {
     if (!loadMQTTData()) {
-        MQTTErrorPicture();
-        return;
+        if (noerrorimage) {
+            esp_sleep_enable_timer_wakeup(10*60*1000000ULL); //10Min
+            esp_deep_sleep_start();
+        } else {
+            MQTTErrorPicture();
+            return;
+        }
     }
 
     mqtt.setServer(server, port);
@@ -66,7 +78,12 @@ void connectMQTT() {
             mqtt.subscribe(image);
             mqtt.subscribe(sleep);
         } else {
-            MQTTErrorPicture();
+            if (noerrorimage) {
+                esp_sleep_enable_timer_wakeup(10*60*1000000ULL); //10Min
+                esp_deep_sleep_start();
+            } else {
+                MQTTErrorPicture();
+            }
         }
     }
     
@@ -96,7 +113,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
     } else if (strcmp(topic, sleepTopic) == 0) {
         char buf[16];
         snprintf(buf, sizeof(buf), "%.*s", length, (char*)payload);
-        int seconds = atoi(buf);
+
+        int seconds = 0;
+        char flag[8] = {0};
+
+        sscanf(buf, "%d,%7s", &seconds, flag);
+        
+        bool noerrorimage = (strcmp(flag, "true") == 0);
+
+        prefs.begin("errorimage", false);
+        prefs.putBool("noerrorimage", noerrorimage);
+        prefs.end();
 
         char gnTopic[32];
         char gnPayload[32];
