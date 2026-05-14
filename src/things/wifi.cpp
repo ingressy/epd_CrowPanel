@@ -4,6 +4,7 @@
 
 char ssid[32];
 char password[64];
+bool noerrorimage;
 
 
 bool loadWifiData() {
@@ -21,13 +22,23 @@ bool loadWifiData() {
     prefs.getString("ssid", ssid, sizeof(ssid));
     prefs.getString("password", password, sizeof(password));
     prefs.end();
+
+    prefs.begin("errorimage", true);
+    noerrorimage = prefs.getBool("noerrorimage", false);
+    prefs.end();
+
     return true;
 }
 
 void connectWifi() {
     if (!loadWifiData()) {
-        WifiErrorPicture();
-        return;
+        if (noerrorimage) {
+            esp_sleep_enable_timer_wakeup(10*60*1000000ULL); //10Min
+            esp_deep_sleep_start();
+        } else {
+            WifiErrorPicture();
+            return;
+        }
     }
 
     WiFi.begin(ssid, password);
@@ -37,8 +48,13 @@ void connectWifi() {
         delay(500);
         versuche++;
         if (versuche > 240) {
-            WifiErrorPicture();
-            return;
+            if (noerrorimage) {
+                    esp_sleep_enable_timer_wakeup(10*60*1000000ULL); //10Min
+                    esp_deep_sleep_start();
+            } else {
+                WifiErrorPicture();
+                return;
+            }
         }
     }
 }
