@@ -15,7 +15,11 @@ bool loadWifiData();
 //errorImage.cpp
 void WifiErrorPicture(void);
 void MQTTErrorPicture(void);
+void OTAErrorPicture(void);
 
 //mqtt.cpp
 void connectMQTT(void);
 bool loadMQTTData();
+
+//battery.cpp
+int readBatteryPercent(void);

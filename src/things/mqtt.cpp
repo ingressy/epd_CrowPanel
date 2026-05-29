@@ -2,6 +2,8 @@
 #include <PubSubClient.h>
 #include <Preferences.h>
 #include <header.h>
+#include <HTTPUpdate.h>
+
 #include "epd/EPD.h"
 #include "epd/EPD_GUI.h"
 
@@ -14,9 +16,9 @@ const int IMAGE_SIZE = 400 * 300 / 8;  // = 15000 Bytes
 char server[32];
 uint16_t port;
 uint16_t id;
+uint16_t errorcode;
 
-Preferences prefs;
-bool noerrorimage;
+bool noerrorimage1;
 
 void callback(char* topic, byte* payload, unsigned int length);
 
@@ -38,7 +40,11 @@ bool loadMQTTData() {
     prefs.end();
 
     prefs.begin("errorimage", true);
-    noerrorimage = prefs.getBool("noerrorimage", false);
+    noerrorimage1 = prefs.getBool("noerrorimage", false);
+    prefs.end();
+
+    prefs.begin("error-code", false);
+    prefs.getUShort("error",errorcode);
     prefs.end();
 
     return true;
@@ -46,7 +52,7 @@ bool loadMQTTData() {
 
 void connectMQTT() {
     if (!loadMQTTData()) {
-        if (noerrorimage) {
+        if (noerrorimage1) {
             esp_sleep_enable_timer_wakeup(10*60*1000000ULL); //10Min
             esp_deep_sleep_start();
         } else {
@@ -64,21 +70,28 @@ void connectMQTT() {
     char topic[32];
     char image[32];
     char sleep[32];
+    char awakePayload[32];
 
     snprintf(clientId, sizeof(clientId), "%u", id); 
     snprintf(topic,    sizeof(topic),    "%u/awake", id);
     snprintf(image,    sizeof(image),    "%u/image", id);
     snprintf(sleep,    sizeof(sleep),    "%u/sleep", id);
 
+    int batt = readBatteryPercent();
+
     int versuche = 40;
     while (!mqtt.connected() && versuche-- > 0) {
         String strid = String(id);
         if (mqtt.connect(clientId)) {
-            mqtt.publish(topic, "awake,100,0x00");
+            snprintf(awakePayload, sizeof(awakePayload), "awake,%d,%d", batt, errorcode);
+
+            mqtt.publish(topic, awakePayload);
+
+            //mqtt.publish(topic, "awake,100,0x00");
             mqtt.subscribe(image);
             mqtt.subscribe(sleep);
         } else {
-            if (noerrorimage) {
+            if (noerrorimage1) {
                 esp_sleep_enable_timer_wakeup(10*60*1000000ULL); //10Min
                 esp_deep_sleep_start();
             } else {
@@ -92,11 +105,15 @@ void connectMQTT() {
 
 void callback(char* topic, byte* payload, unsigned int length) {
     imageBuffer = (uint8_t*)ps_malloc(IMAGE_SIZE);
+
+    //topic definition
     char imageTopic[32];
     char sleepTopic[32];
+    char otaupdateTopic[32];
 
     snprintf(imageTopic, sizeof(imageTopic), "%u/image", id);
     snprintf(sleepTopic, sizeof(sleepTopic), "%u/sleep", id);
+    snprintf(otaupdateTopic, sizeof(otaupdateTopic), "%u/otaupdate", id);
 
     if (strcmp(topic, imageTopic) == 0) {
         if (length == IMAGE_SIZE) {
@@ -135,5 +152,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
         esp_sleep_enable_timer_wakeup((uint64_t)seconds * 1000000ULL);
         esp_deep_sleep_start(); 
+    } else if (strcmp(topic, otaupdateTopic) == 0) {
+        String url = "";
+        for (int i = 0; i < length; i++) url += (char)payload[i];
+
+        t_httpUpdate_return ret = httpUpdate.update(espClient, url);
+
+        switch (ret)
+        {
+        case HTTP_UPDATE_OK:
+            break;
+        case HTTP_UPDATE_FAILED:
+            OTAErrorPicture();
+            break;
+        }
     }
 }

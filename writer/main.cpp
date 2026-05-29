@@ -9,6 +9,7 @@ String password = "";
 String mqttserver = "";
 uint16_t mqttport = 1883;
 uint16_t id = 0x0A;
+uint16_t errorcode = 0x00;
 
 void setup() {
     nvs_flash_erase();
@@ -24,6 +25,11 @@ void setup() {
     prefs.putUShort("port", mqttport);
     prefs.putUShort("number", id);
     prefs.end();
+
+    prefs.begin("error-code", false);
+    prefs.putUShort("error",errorcode);
+    prefs.end();
+
 }
 
 void loop() {
