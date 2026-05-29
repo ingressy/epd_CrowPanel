@@ -150,6 +150,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
         delay(500);
 
+        prefs.begin("error-code", false);
+        prefs.putUShort("error",0x00);
+        prefs.end();
+
         esp_sleep_enable_timer_wakeup((uint64_t)seconds * 1000000ULL);
         esp_deep_sleep_start(); 
     } else if (strcmp(topic, otaupdateTopic) == 0) {
