@@ -77,7 +77,7 @@ void connectMQTT() {
     snprintf(image,    sizeof(image),    "%u/image", id);
     snprintf(sleep,    sizeof(sleep),    "%u/sleep", id);
 
-    int batt = readBatteryPercent();
+    float batt = readBatteryVoltage();
 
     int versuche = 40;
     while (!mqtt.connected() && versuche-- > 0) {
