@@ -83,7 +83,7 @@ void connectMQTT() {
     while (!mqtt.connected() && versuche-- > 0) {
         String strid = String(id);
         if (mqtt.connect(clientId)) {
-            snprintf(awakePayload, sizeof(awakePayload), "awake,%d,%d", batt, errorcode);
+            snprintf(awakePayload, sizeof(awakePayload), "awake,%.2f,%d", batt, errorcode);
 
             mqtt.publish(topic, awakePayload);
 
